@@ -18,6 +18,7 @@
 #include <Library/DxeServicesLib.h>
 #include <Library/FdtLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
 #include <Library/Rk3588Pcie.h>
 #include <Library/RockchipPlatformLib.h>
@@ -279,6 +280,158 @@ FdtFixupPcie3Devices (
     FixedPcdGetBool (PcdPcie30x2Supported) &&
     PcdGet8 (PcdPcie30PhyMode) != PCIE30_PHY_MODE_AGGREGATION
     );
+}
+
+STATIC
+VOID
+EFIAPI
+FdtFixupPcieLinkSpeedMax (
+  IN VOID  *Fdt
+  )
+{
+  STATIC CONST CHAR8  *PcieNodes[] = {
+    "/pcie@fe150000",
+    "/pcie@fe160000",
+    "/pcie@fe170000",
+    "/pcie@fe180000",
+    "/pcie@fe190000"
+  };
+  UINT32              MaxLinkSpeed;
+  UINT32              MaxMode;
+  UINT32              MaxLinkSpeedProperty;
+  INT32               Node;
+  INT32               Ret;
+
+  MaxMode = PcdGet32 (PcdPcieLinkSpeedMax);
+  if (MaxMode == PCIE_LINK_SPEED_MAX_AUTO) {
+    return;
+  }
+
+  switch (MaxMode) {
+    case PCIE_LINK_SPEED_MAX_GEN1:
+      MaxLinkSpeed = 1;
+      break;
+    case PCIE_LINK_SPEED_MAX_GEN2:
+      MaxLinkSpeed = 2;
+      break;
+    case PCIE_LINK_SPEED_MAX_GEN3:
+      MaxLinkSpeed = 3;
+      break;
+    default:
+      return;
+  }
+
+  DEBUG ((DEBUG_INFO, "FdtPlatform: Capping PCIe max-link-speed to Gen%u\n", MaxLinkSpeed));
+
+  MaxLinkSpeedProperty = CpuToFdt32 (MaxLinkSpeed);
+  for (UINTN Index = 0; Index < ARRAY_SIZE (PcieNodes); Index++) {
+    Node = FdtPathOffset (Fdt, PcieNodes[Index]);
+    if (Node < 0) {
+      continue;
+    }
+
+    Ret = FdtSetProp (Fdt, Node, "max-link-speed", &MaxLinkSpeedProperty, sizeof (MaxLinkSpeedProperty));
+    if (Ret < 0) {
+      DEBUG ((
+        DEBUG_WARN,
+        "FdtPlatform: Failed to set max-link-speed for '%a'. Ret=%a\n",
+        PcieNodes[Index],
+        FdtStrerror (Ret)
+        ));
+    }
+  }
+}
+
+STATIC
+BOOLEAN
+EFIAPI
+GetThermalProfileCaps (
+  OUT UINT32  *CpulCapMhz,
+  OUT UINT32  *CpubCapMhz
+  )
+{
+  UINT32  Mode;
+
+  Mode = PcdGet32 (PcdThermalProfileMode);
+  switch (Mode) {
+    case THERMAL_PROFILE_MEDIUM:
+      *CpulCapMhz = 1416;
+      *CpubCapMhz = 1800;
+      break;
+    case THERMAL_PROFILE_SLOW:
+      *CpulCapMhz = 1008;
+      *CpubCapMhz = 1416;
+      break;
+    case THERMAL_PROFILE_CUSTOM:
+      *CpulCapMhz = PcdGet32 (PcdThermalProfileCustomCpulMhz);
+      *CpubCapMhz = PcdGet32 (PcdThermalProfileCustomCpubMhz);
+      break;
+    case THERMAL_PROFILE_MAX:
+    default:
+      return FALSE;
+  }
+
+  return TRUE;
+}
+
+STATIC
+VOID
+EFIAPI
+FdtApplyThermalProfileCaps (
+  IN VOID  *Fdt
+  )
+{
+  UINT32  CapCpulMhz;
+  UINT32  CapCpubMhz;
+  UINT32  CapMhz;
+  INT32   CpusNode;
+  INT32   CpuNode;
+  INT32   Ret;
+  UINT64  CpuClockHz;
+
+  if (!GetThermalProfileCaps (&CapCpulMhz, &CapCpubMhz)) {
+    return;
+  }
+
+  CpusNode = FdtPathOffset (Fdt, "/cpus");
+  if (CpusNode < 0) {
+    return;
+  }
+
+  DEBUG ((
+    DEBUG_INFO,
+    "FdtPlatform: Applying thermal profile caps to CPU clocks (CPUL=%u MHz, CPUB=%u MHz)\n",
+    CapCpulMhz,
+    CapCpubMhz
+    ));
+
+  for (CpuNode = FdtFirstSubnode (Fdt, CpusNode);
+       CpuNode >= 0;
+       CpuNode = FdtNextSubnode (Fdt, CpuNode))
+  {
+    CONST CHAR8  *DeviceType;
+    INT32        DeviceTypeLength;
+    CONST UINT32 *Reg;
+    INT32        RegLength;
+
+    DeviceType = FdtGetProp (Fdt, CpuNode, "device_type", &DeviceTypeLength);
+    if ((DeviceType == NULL) || (AsciiStrCmp (DeviceType, "cpu") != 0)) {
+      continue;
+    }
+
+    Reg = FdtGetProp (Fdt, CpuNode, "reg", &RegLength);
+    if ((Reg == NULL) || (RegLength < (INT32)sizeof (UINT32))) {
+      continue;
+    }
+
+    CapMhz = (Fdt32ToCpu (Reg[0]) < 0x400) ? CapCpulMhz : CapCpubMhz;
+    CpuClockHz = (UINT64)CapMhz * 1000000ULL;
+
+    Ret = FdtSetPropU64 (Fdt, CpuNode, "clock-frequency", CpuClockHz);
+    if (Ret < 0) {
+      DEBUG ((DEBUG_WARN, "FdtPlatform: Failed to set CPU clock cap. Ret=%a\n", FdtStrerror (Ret)));
+    }
+  }
 }
 
 STATIC
@@ -561,7 +714,9 @@ ApplyPlatformFdtFixups (
 
   FdtFixupComboPhyDevices (*Fdt);
   FdtFixupPcie3Devices (*Fdt);
+  FdtFixupPcieLinkSpeedMax (*Fdt);
   FdtFixupPcieResources (*Fdt);
+  FdtApplyThermalProfileCaps (*Fdt);
   FdtFixupVopDevices (*Fdt);
 
   return EFI_SUCCESS;

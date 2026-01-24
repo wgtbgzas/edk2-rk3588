@@ -34,6 +34,7 @@
   DxeServicesLib
   FdtLib
   MemoryAllocationLib
+  PcdLib
   PrintLib
   RockchipPlatformLib
   UefiBootServicesTableLib
@@ -65,6 +66,10 @@
   gRK3588TokenSpaceGuid.PcdPcie30x2Supported
   gRK3588TokenSpaceGuid.PcdPcie30State
   gRK3588TokenSpaceGuid.PcdPcie30PhyMode
+  gRK3588TokenSpaceGuid.PcdPcieLinkSpeedMax
+  gRK3588TokenSpaceGuid.PcdThermalProfileMode
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpulMhz
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpubMhz
 
 [Depex]
   gRockchipPlatformConfigAppliedProtocolGuid
