@@ -26,6 +26,7 @@
   UsbDpPhy.c
   DebugSerialPort.c
   Display.c
+  ThermalProfile.c
 
 [Packages]
   ArmPkg/ArmPkg.dec
@@ -82,6 +83,13 @@
   gRK3588TokenSpaceGuid.PcdCPUB23ClusterVoltageMode
   gRK3588TokenSpaceGuid.PcdCPUB23ClusterVoltageCustom
 
+  gRK3588TokenSpaceGuid.PcdThermalProfileModeDefault
+  gRK3588TokenSpaceGuid.PcdThermalProfileMode
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpulMhzDefault
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpubMhzDefault
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpulMhz
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpubMhz
+
   gRK3588TokenSpaceGuid.PcdComboPhy0Switchable
   gRK3588TokenSpaceGuid.PcdComboPhy1Switchable
   gRK3588TokenSpaceGuid.PcdComboPhy2Switchable
@@ -97,6 +105,8 @@
   gRK3588TokenSpaceGuid.PcdPcie30PhyMode
   gRK3588TokenSpaceGuid.PcdPcie30PhyModeDefault
   gRK3588TokenSpaceGuid.PcdPcie30PhyModeSwitchable
+  gRK3588TokenSpaceGuid.PcdPcieLinkSpeedMaxDefault
+  gRK3588TokenSpaceGuid.PcdPcieLinkSpeedMax
 
   gRK3588TokenSpaceGuid.PcdConfigTableModeDefault
   gRK3588TokenSpaceGuid.PcdConfigTableMode

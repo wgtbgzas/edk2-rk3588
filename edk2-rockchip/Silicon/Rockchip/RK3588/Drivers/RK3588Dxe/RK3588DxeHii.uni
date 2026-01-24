@@ -173,6 +173,26 @@
 #string STR_CPU_PERF_CLUSTER_VOLTAGE_MODE_CUSTOM           #language en-US "Custom"
 
 /*
+ * Thermal/Performance profiles
+ */
+#string STR_THERMAL_PROFILE_FORM_TITLE                     #language en-US "Thermal/Performance Profile"
+#string STR_THERMAL_PROFILE_FORM_HELP                      #language en-US "Select a performance profile to reduce heat on fanless boards."
+#string STR_THERMAL_PROFILE_FORM_SUBTITLE                  #language en-US "Profiles apply early in boot and cap CPU clocks without changing voltages."
+
+#string STR_THERMAL_PROFILE_MODE_PROMPT                    #language en-US "Profile"
+#string STR_THERMAL_PROFILE_MODE_HELP                      #language en-US "Choose how aggressively to cap CPU frequencies."
+
+#string STR_THERMAL_PROFILE_MAX                            #language en-US "Max"
+#string STR_THERMAL_PROFILE_MEDIUM                         #language en-US "Medium"
+#string STR_THERMAL_PROFILE_SLOW                           #language en-US "Slow"
+#string STR_THERMAL_PROFILE_CUSTOM                         #language en-US "Custom"
+
+#string STR_THERMAL_PROFILE_CUSTOM_CPUL_PROMPT             #language en-US "Custom CPUL Cap (MHz)"
+#string STR_THERMAL_PROFILE_CUSTOM_CPUL_HELP               #language en-US "Custom maximum frequency for the LITTLE (Cortex-A55) cluster."
+#string STR_THERMAL_PROFILE_CUSTOM_CPUB_PROMPT             #language en-US "Custom CPUB Cap (MHz)"
+#string STR_THERMAL_PROFILE_CUSTOM_CPUB_HELP               #language en-US "Custom maximum frequency for the big (Cortex-A76) clusters."
+
+/*
  * PCIe/SATA/USB Combo PIPE PHY configuration
  */
 #string STR_COMBO_PHY_FORM_TITLE                           #language en-US "PCIe/SATA/USB Combo PIPE PHY"
@@ -219,6 +239,13 @@
 #string STR_PCIE30_PHY_MODE_NANBBI                         #language en-US "x1x1 x2"
 #string STR_PCIE30_PHY_MODE_NABINB                         #language en-US "x2 x1x1"
 #string STR_PCIE30_PHY_MODE_NABIBI                         #language en-US "x1x1 x1x1"
+
+#string STR_PCIE_LINK_SPEED_MAX_PROMPT                     #language en-US "Max Link Speed"
+#string STR_PCIE_LINK_SPEED_MAX_HELP                       #language en-US "Limit the maximum PCIe link speed for compatibility with certain devices."
+#string STR_PCIE_LINK_SPEED_MAX_AUTO                       #language en-US "Auto"
+#string STR_PCIE_LINK_SPEED_MAX_GEN1                       #language en-US "Gen 1 (2.5 GT/s)"
+#string STR_PCIE_LINK_SPEED_MAX_GEN2                       #language en-US "Gen 2 (5.0 GT/s)"
+#string STR_PCIE_LINK_SPEED_MAX_GEN3                       #language en-US "Gen 3 (8.0 GT/s)"
 
 /*
  * ACPI / Device Tree configuration

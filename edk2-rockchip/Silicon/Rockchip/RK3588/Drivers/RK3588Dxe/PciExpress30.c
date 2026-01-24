@@ -61,4 +61,18 @@ SetupPcie30Variables (
     Status = PcdSet8S (PcdPcie30PhyMode, FixedPcdGet8 (PcdPcie30PhyModeDefault));
     ASSERT_EFI_ERROR (Status);
   }
+
+  Size = sizeof (UINT32);
+
+  Status = gRT->GetVariable (
+                  L"PcieLinkSpeedMax",
+                  &gRK3588DxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Var32
+                  );
+  if (EFI_ERROR (Status)) {
+    Status = PcdSet32S (PcdPcieLinkSpeedMax, FixedPcdGet32 (PcdPcieLinkSpeedMaxDefault));
+    ASSERT_EFI_ERROR (Status);
+  }
 }

@@ -53,6 +53,7 @@
 
   gRK3588TokenSpaceGuid.PcdPcie30State
   gRK3588TokenSpaceGuid.PcdPcie30PhyMode
+  gRK3588TokenSpaceGuid.PcdPcieLinkSpeedMax
 
   gRK3588TokenSpaceGuid.PcdPcieEcamCompliantSegmentsMask
 

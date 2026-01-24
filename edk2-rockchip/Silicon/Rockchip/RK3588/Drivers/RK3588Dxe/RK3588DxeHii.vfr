@@ -18,6 +18,7 @@
 #include "FanControl.h"
 #include "DebugSerialPort.h"
 #include "Display.h"
+#include "ThermalProfile.h"
 
 //
 // EFI Variable attributes
@@ -143,6 +144,21 @@ formset
       name  = CpuPerf_CPUB23ClusterVoltageCustom,
       guid  = RK3588DXE_FORMSET_GUID;
 
+    efivarstore THERMAL_PROFILE_MODE_VARSTORE_DATA,
+      attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+      name  = ThermalProfileMode,
+      guid  = RK3588DXE_FORMSET_GUID;
+
+    efivarstore THERMAL_PROFILE_CUSTOM_CLOCK_VARSTORE_DATA,
+      attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+      name  = ThermalProfileCustomCpulMhz,
+      guid  = RK3588DXE_FORMSET_GUID;
+
+    efivarstore THERMAL_PROFILE_CUSTOM_CLOCK_VARSTORE_DATA,
+      attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+      name  = ThermalProfileCustomCpubMhz,
+      guid  = RK3588DXE_FORMSET_GUID;
+
     efivarstore COMBO_PHY_MODE_VARSTORE_DATA,
       attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
       name  = ComboPhy0Mode,
@@ -176,6 +192,11 @@ formset
     efivarstore PCIE30_PHY_MODE_VARSTORE_DATA,
       attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
       name  = Pcie30PhyMode,
+      guid  = RK3588DXE_FORMSET_GUID;
+
+    efivarstore PCIE_LINK_SPEED_MAX_VARSTORE_DATA,
+      attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+      name  = PcieLinkSpeedMax,
       guid  = RK3588DXE_FORMSET_GUID;
 
     efivarstore CONFIG_TABLE_MODE_VARSTORE_DATA,
@@ -258,6 +279,10 @@ formset
       goto 0x1001,
         prompt = STRING_TOKEN(STR_CPU_PERF_FORM_TITLE),
         help = STRING_TOKEN(STR_CPU_PERF_FORM_HELP);
+
+      goto 0x1008,
+        prompt = STRING_TOKEN(STR_THERMAL_PROFILE_FORM_TITLE),
+        help = STRING_TOKEN(STR_THERMAL_PROFILE_FORM_HELP);
 
       goto 0x1002,
         prompt = STRING_TOKEN(STR_COMBO_PHY_FORM_TITLE),
@@ -676,6 +701,44 @@ formset
         subtitle text = STRING_TOKEN(STR_CPU_PERF_FORM_SUBTITLE);
     endform;
 
+    form formid = 0x1008,
+        title  = STRING_TOKEN(STR_THERMAL_PROFILE_FORM_TITLE);
+        subtitle text = STRING_TOKEN(STR_THERMAL_PROFILE_FORM_SUBTITLE);
+
+        oneof varid = ThermalProfileMode.Mode,
+          prompt      = STRING_TOKEN(STR_THERMAL_PROFILE_MODE_PROMPT),
+          help        = STRING_TOKEN(STR_THERMAL_PROFILE_MODE_HELP),
+          flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+          default     = FixedPcdGet32 (PcdThermalProfileModeDefault),
+          option text = STRING_TOKEN(STR_THERMAL_PROFILE_MAX), value = THERMAL_PROFILE_MAX, flags = DEFAULT;
+          option text = STRING_TOKEN(STR_THERMAL_PROFILE_MEDIUM), value = THERMAL_PROFILE_MEDIUM, flags = 0;
+          option text = STRING_TOKEN(STR_THERMAL_PROFILE_SLOW), value = THERMAL_PROFILE_SLOW, flags = 0;
+          option text = STRING_TOKEN(STR_THERMAL_PROFILE_CUSTOM), value = THERMAL_PROFILE_CUSTOM, flags = 0;
+        endoneof;
+
+        grayoutif NOT ideqval ThermalProfileMode.Mode == THERMAL_PROFILE_CUSTOM;
+          numeric varid = ThermalProfileCustomCpulMhz.Mhz,
+            prompt  = STRING_TOKEN(STR_THERMAL_PROFILE_CUSTOM_CPUL_PROMPT),
+            help    = STRING_TOKEN(STR_THERMAL_PROFILE_CUSTOM_CPUL_HELP),
+            flags   = DISPLAY_UINT_DEC | NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+            minimum = THERMAL_PROFILE_CPUL_MIN_MHZ,
+            maximum = THERMAL_PROFILE_CPUL_MAX_MHZ,
+            step    = 0,
+            default = FixedPcdGet32 (PcdThermalProfileCustomCpulMhzDefault),
+          endnumeric;
+
+          numeric varid = ThermalProfileCustomCpubMhz.Mhz,
+            prompt  = STRING_TOKEN(STR_THERMAL_PROFILE_CUSTOM_CPUB_PROMPT),
+            help    = STRING_TOKEN(STR_THERMAL_PROFILE_CUSTOM_CPUB_HELP),
+            flags   = DISPLAY_UINT_DEC | NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+            minimum = THERMAL_PROFILE_CPUB_MIN_MHZ,
+            maximum = THERMAL_PROFILE_CPUB_MAX_MHZ,
+            step    = 0,
+            default = FixedPcdGet32 (PcdThermalProfileCustomCpubMhzDefault),
+          endnumeric;
+        endif;
+    endform;
+
     form formid = 0x1002,
         title  = STRING_TOKEN(STR_COMBO_PHY_FORM_TITLE);
 
@@ -796,6 +859,17 @@ formset
             option text = STRING_TOKEN(STR_PCIE30_PHY_MODE_NABIBI), value = PCIE30_PHY_MODE_NABIBI, flags = 0;
           endoneof;
         endif;
+
+        oneof varid = PcieLinkSpeedMax.Mode,
+          prompt      = STRING_TOKEN(STR_PCIE_LINK_SPEED_MAX_PROMPT),
+          help        = STRING_TOKEN(STR_PCIE_LINK_SPEED_MAX_HELP),
+          flags       = NUMERIC_SIZE_4 | INTERACTIVE | RESET_REQUIRED,
+          default     = FixedPcdGet32 (PcdPcieLinkSpeedMaxDefault),
+          option text = STRING_TOKEN(STR_PCIE_LINK_SPEED_MAX_AUTO), value = PCIE_LINK_SPEED_MAX_AUTO, flags = DEFAULT;
+          option text = STRING_TOKEN(STR_PCIE_LINK_SPEED_MAX_GEN1), value = PCIE_LINK_SPEED_MAX_GEN1, flags = 0;
+          option text = STRING_TOKEN(STR_PCIE_LINK_SPEED_MAX_GEN2), value = PCIE_LINK_SPEED_MAX_GEN2, flags = 0;
+          option text = STRING_TOKEN(STR_PCIE_LINK_SPEED_MAX_GEN3), value = PCIE_LINK_SPEED_MAX_GEN3, flags = 0;
+        endoneof;
     endform;
 #endif
 
