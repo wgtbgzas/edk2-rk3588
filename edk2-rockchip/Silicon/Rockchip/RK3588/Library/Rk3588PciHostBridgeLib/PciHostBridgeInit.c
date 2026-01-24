@@ -26,6 +26,19 @@
 
 #include "PciHostBridgeInit.h"
 
+STATIC
+VOID
+PciEnableLtssm (
+  IN EFI_PHYSICAL_ADDRESS  ApbBase,
+  IN BOOLEAN               Enable
+  );
+
+STATIC
+BOOLEAN
+PciIsLinkUp (
+  IN EFI_PHYSICAL_ADDRESS  ApbBase
+  );
+
 /* APB Registers */
 #define PCIE_CLIENT_GENERAL_CON         0x0000
 #define  DEVICE_TYPE_SHIFT              4

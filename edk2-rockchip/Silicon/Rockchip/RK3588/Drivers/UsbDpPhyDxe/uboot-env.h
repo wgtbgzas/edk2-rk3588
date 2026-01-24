@@ -10,10 +10,13 @@ typedef UINT32 u32;
 typedef UINT64 u64;
 typedef unsigned int uint;
 typedef UINTN ulong;
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 202311L
+#ifndef __bool_true_false_are_defined
 typedef BOOLEAN bool;
-
 #define true TRUE
 #define false FALSE
+#endif
+#endif
 
 #define udelay(x)	MicroSecondDelay (x)
 
