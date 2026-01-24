@@ -40,6 +40,7 @@
 #include "UsbDpPhy.h"
 #include "DebugSerialPort.h"
 #include "Display.h"
+#include "ThermalProfile.h"
 
 extern UINT8  RK3588DxeHiiBin[];
 extern UINT8  RK3588DxeStrings[];
@@ -192,6 +193,7 @@ SetupVariables (
   )
 {
   SetupCpuPerfVariables ();
+  SetupThermalProfileVariables ();
   SetupComboPhyVariables ();
   SetupPcie30Variables ();
   SetupConfigTableVariables ();
@@ -240,6 +242,7 @@ ApplyVariables (
   )
 {
   ApplyCpuClockVariables ();
+  ApplyThermalProfileVariables ();
   ApplyComboPhyVariables ();
   ApplyPcie30Variables ();
   ApplyConfigTableVariables ();

@@ -253,6 +253,9 @@
   gRK3588TokenSpaceGuid.PcdCPULClusterClockPresetDefault|$(CPU_PERF_CLUSTER_CLOCK_PRESET_MAX)
   gRK3588TokenSpaceGuid.PcdCPUB01ClusterClockPresetDefault|$(CPU_PERF_CLUSTER_CLOCK_PRESET_MAX)
   gRK3588TokenSpaceGuid.PcdCPUB23ClusterClockPresetDefault|$(CPU_PERF_CLUSTER_CLOCK_PRESET_MAX)
+  gRK3588TokenSpaceGuid.PcdThermalProfileModeDefault|$(THERMAL_PROFILE_MAX)
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpulMhzDefault|1416
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpubMhzDefault|1800
 
   #
   # Cooling Fan definitions
@@ -276,6 +279,7 @@
   gRK3588TokenSpaceGuid.PcdPcie30x2Supported|FALSE
   gRK3588TokenSpaceGuid.PcdPcie30PhyModeSwitchable|FALSE
   gRK3588TokenSpaceGuid.PcdPcie30PhyModeDefault|$(PCIE30_PHY_MODE_AGGREGATION)
+  gRK3588TokenSpaceGuid.PcdPcieLinkSpeedMaxDefault|$(PCIE_LINK_SPEED_MAX_AUTO)
 
   #
   # ACPI / Device Tree support flags and default values
@@ -353,6 +357,9 @@
   gRK3588TokenSpaceGuid.PcdCPUB01ClusterVoltageCustom|L"CpuPerf_CPUB01ClusterVoltageCustom"|gRK3588DxeFormSetGuid|0x0|1000000
   gRK3588TokenSpaceGuid.PcdCPUB23ClusterVoltageMode|L"CpuPerf_CPUB23ClusterVoltageMode"|gRK3588DxeFormSetGuid|0x0|0
   gRK3588TokenSpaceGuid.PcdCPUB23ClusterVoltageCustom|L"CpuPerf_CPUB23ClusterVoltageCustom"|gRK3588DxeFormSetGuid|0x0|1000000
+  gRK3588TokenSpaceGuid.PcdThermalProfileMode|L"ThermalProfileMode"|gRK3588DxeFormSetGuid|0x0|gRK3588TokenSpaceGuid.PcdThermalProfileModeDefault
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpulMhz|L"ThermalProfileCustomCpulMhz"|gRK3588DxeFormSetGuid|0x0|gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpulMhzDefault
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpubMhz|L"ThermalProfileCustomCpubMhz"|gRK3588DxeFormSetGuid|0x0|gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpubMhzDefault
 
   #
   # PCIe/SATA/USB Combo PIPE PHY
@@ -366,6 +373,7 @@
   #
   gRK3588TokenSpaceGuid.PcdPcie30State|L"Pcie30State"|gRK3588DxeFormSetGuid|0x0|gRK3588TokenSpaceGuid.PcdPcie30Supported
   gRK3588TokenSpaceGuid.PcdPcie30PhyMode|L"Pcie30PhyMode"|gRK3588DxeFormSetGuid|0x0|gRK3588TokenSpaceGuid.PcdPcie30PhyModeDefault
+  gRK3588TokenSpaceGuid.PcdPcieLinkSpeedMax|L"PcieLinkSpeedMax"|gRK3588DxeFormSetGuid|0x0|gRK3588TokenSpaceGuid.PcdPcieLinkSpeedMaxDefault
 
   #
   # ACPI / Device Tree

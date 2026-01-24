@@ -33,6 +33,9 @@
   gRK3588TokenSpaceGuid.PcdCPULClusterClockPresetDefault|0|UINT32|0x00010001
   gRK3588TokenSpaceGuid.PcdCPUB01ClusterClockPresetDefault|0|UINT32|0x00010002
   gRK3588TokenSpaceGuid.PcdCPUB23ClusterClockPresetDefault|0|UINT32|0x00010003
+  gRK3588TokenSpaceGuid.PcdThermalProfileModeDefault|0|UINT32|0x00010004
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpulMhzDefault|0|UINT32|0x00010005
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpubMhzDefault|0|UINT32|0x00010006
 
   gRK3588TokenSpaceGuid.PcdComboPhy0Switchable|FALSE|BOOLEAN|0x00010101
   gRK3588TokenSpaceGuid.PcdComboPhy1Switchable|FALSE|BOOLEAN|0x00010102
@@ -45,6 +48,7 @@
   gRK3588TokenSpaceGuid.PcdPcie30x2Supported|FALSE|BOOLEAN|0x00010202
   gRK3588TokenSpaceGuid.PcdPcie30PhyModeSwitchable|FALSE|BOOLEAN|0x00010203
   gRK3588TokenSpaceGuid.PcdPcie30PhyModeDefault|0|UINT8|0x00010204
+  gRK3588TokenSpaceGuid.PcdPcieLinkSpeedMaxDefault|0|UINT32|0x00010205
 
   gRK3588TokenSpaceGuid.PcdConfigTableModeDefault|0|UINT32|0x00010300
   gRK3588TokenSpaceGuid.PcdAcpiPcieEcamCompatModeDefault|0|UINT32|0x00010301
@@ -110,6 +114,9 @@
   gRK3588TokenSpaceGuid.PcdCPUB01ClusterVoltageCustom|0|UINT32|0x0000000A
   gRK3588TokenSpaceGuid.PcdCPUB23ClusterVoltageMode|0|UINT32|0x0000000B
   gRK3588TokenSpaceGuid.PcdCPUB23ClusterVoltageCustom|0|UINT32|0x0000000C
+  gRK3588TokenSpaceGuid.PcdThermalProfileMode|0|UINT32|0x0000000D
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpulMhz|0|UINT32|0x0000000E
+  gRK3588TokenSpaceGuid.PcdThermalProfileCustomCpubMhz|0|UINT32|0x0000000F
 
   gRK3588TokenSpaceGuid.PcdComboPhy0Mode|0|UINT32|0x00000101
   gRK3588TokenSpaceGuid.PcdComboPhy1Mode|0|UINT32|0x00000102
@@ -117,6 +124,7 @@
 
   gRK3588TokenSpaceGuid.PcdPcie30State|0|UINT32|0x00000201
   gRK3588TokenSpaceGuid.PcdPcie30PhyMode|0|UINT8|0x00000204
+  gRK3588TokenSpaceGuid.PcdPcieLinkSpeedMax|0|UINT32|0x00000205
 
   gRK3588TokenSpaceGuid.PcdConfigTableMode|0|UINT32|0x00000300
   gRK3588TokenSpaceGuid.PcdAcpiPcieEcamCompatMode|0|UINT32|0x00000301

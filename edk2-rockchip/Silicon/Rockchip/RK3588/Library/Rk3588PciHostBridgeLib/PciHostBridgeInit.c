@@ -345,6 +345,79 @@ PciSetupLinkSpeed (
 }
 
 STATIC
+UINT32
+PciApplySpeedCap (
+  IN UINT32  Speed,
+  IN UINT32  MaxSetting
+  )
+{
+  UINT32  MaxSpeed;
+
+  switch (MaxSetting) {
+    case PCIE_LINK_SPEED_MAX_GEN1:
+      MaxSpeed = 1;
+      break;
+    case PCIE_LINK_SPEED_MAX_GEN2:
+      MaxSpeed = 2;
+      break;
+    case PCIE_LINK_SPEED_MAX_GEN3:
+      MaxSpeed = 3;
+      break;
+    case PCIE_LINK_SPEED_MAX_AUTO:
+    default:
+      return Speed;
+  }
+
+  if (Speed > MaxSpeed) {
+    return MaxSpeed;
+  }
+
+  return Speed;
+}
+
+STATIC
+EFI_STATUS
+PciTrainLinkWithSpeed (
+  IN UINT32                Segment,
+  IN EFI_PHYSICAL_ADDRESS  ApbBase,
+  IN EFI_PHYSICAL_ADDRESS  DbiBase,
+  IN UINT32                Speed,
+  IN UINT32                NumLanes
+  )
+{
+  UINTN  Retry;
+
+  DEBUG ((DEBUG_INIT, "PCIe: Training link at speed %u\n", Speed));
+
+  PciSetupLinkSpeed (DbiBase, Speed, NumLanes);
+  PciDirectSpeedChange (DbiBase);
+
+  DEBUG ((DEBUG_INIT, "PCIe: Assert reset\n"));
+  PciePeReset (Segment, TRUE);
+
+  DEBUG ((DEBUG_INIT, "PCIe: Start LTSSM\n"));
+  PciEnableLtssm (ApbBase, TRUE);
+
+  gBS->Stall (100000);
+  DEBUG ((DEBUG_INIT, "PCIe: Deassert reset\n"));
+  PciePeReset (Segment, FALSE);
+
+  /* Wait for link up */
+  DEBUG ((DEBUG_INIT, "PCIe: Waiting for link up...\n"));
+  for (Retry = 10; Retry != 0; Retry--) {
+    if (PciIsLinkUp (ApbBase)) {
+      return EFI_SUCCESS;
+    }
+
+    gBS->Stall (100000);
+  }
+
+  DEBUG ((DEBUG_WARN, "PCIe: Link up timeout at speed %u\n", Speed));
+  PciEnableLtssm (ApbBase, FALSE);
+  return EFI_TIMEOUT;
+}
+
+STATIC
 VOID
 PciGetLinkSpeedWidth (
   IN EFI_PHYSICAL_ADDRESS  DbiBase,
@@ -579,10 +652,13 @@ InitializePciHost (
   EFI_PHYSICAL_ADDRESS  CfgBase;
   EFI_PHYSICAL_ADDRESS  CfgSize;
   EFI_STATUS            Status;
-  UINTN                 Retry;
   UINT32                LinkSpeed;
   UINT32                LinkWidth;
+  UINT32                MaxLinkSpeed;
+  UINT32                SpeedAttempts[3];
   UINT8                 Pcie30PhyMode;
+  UINTN                 SpeedAttemptCount;
+  UINTN                 SpeedAttemptIndex;
 
   Pcie30PhyMode = PcdGet8 (PcdPcie30PhyMode);
   if (Pcie30PhyMode >= NUM_MODES) {
@@ -675,37 +751,40 @@ InitializePciHost (
     PCIE_MEM32_SIZE
     );
 
-  DEBUG ((DEBUG_INIT, "PCIe: Set link speed\n"));
-  PciSetupLinkSpeed (DbiBase, LinkSpeed, LinkWidth);
-  PciDirectSpeedChange (DbiBase);
+  MaxLinkSpeed = PciApplySpeedCap (LinkSpeed, PcdGet32 (PcdPcieLinkSpeedMax));
+  if (MaxLinkSpeed != LinkSpeed) {
+    DEBUG ((DEBUG_WARN, "PCIe: Capping link speed %u -> %u\n", LinkSpeed, MaxLinkSpeed));
+  }
+
+  SpeedAttemptCount    = 0;
+  SpeedAttempts[SpeedAttemptCount++] = MaxLinkSpeed;
+  if (MaxLinkSpeed > 2) {
+    SpeedAttempts[SpeedAttemptCount++] = 2;
+  }
+  if (MaxLinkSpeed > 1) {
+    SpeedAttempts[SpeedAttemptCount++] = 1;
+  }
+
+  Status = EFI_TIMEOUT;
+  for (SpeedAttemptIndex = 0; SpeedAttemptIndex < SpeedAttemptCount; SpeedAttemptIndex++) {
+    Status = PciTrainLinkWithSpeed (
+               Segment,
+               ApbBase,
+               DbiBase,
+               SpeedAttempts[SpeedAttemptIndex],
+               LinkWidth
+               );
+    if (!EFI_ERROR (Status)) {
+      LinkSpeed = SpeedAttempts[SpeedAttemptIndex];
+      break;
+    }
+  }
 
   /* Disallow writing RO registers through the DBI */
   MmioAnd32 (DbiBase + PL_MISC_CONTROL_1_OFF, ~DBI_RO_WR_EN);
 
-  DEBUG ((DEBUG_INIT, "PCIe: Assert reset\n"));
-  PciePeReset (Segment, TRUE);
-
-  DEBUG ((DEBUG_INIT, "PCIe: Start LTSSM\n"));
-
-  PciEnableLtssm (ApbBase, TRUE);
-
-  gBS->Stall (100000);
-  DEBUG ((DEBUG_INIT, "PCIe: Deassert reset\n"));
-  PciePeReset (Segment, FALSE);
-
-  /* Wait for link up */
-  DEBUG ((DEBUG_INIT, "PCIe: Waiting for link up...\n"));
-  for (Retry = 10; Retry != 0; Retry--) {
-    if (PciIsLinkUp (ApbBase)) {
-      break;
-    }
-
-    gBS->Stall (100000);
-  }
-
-  if (Retry == 0) {
-    DEBUG ((DEBUG_WARN, "PCIe: Link up timeout!\n"));
-    return EFI_TIMEOUT;
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
 
   PciGetLinkSpeedWidth (DbiBase, &LinkSpeed, &LinkWidth);
