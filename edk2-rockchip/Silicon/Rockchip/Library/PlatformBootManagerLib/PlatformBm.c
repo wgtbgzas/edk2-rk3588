@@ -30,6 +30,7 @@
 #include <Protocol/PciIo.h>
 #include <Protocol/PciRootBridgeIo.h>
 #include <Protocol/PlatformBootManager.h>
+#include <Protocol/SimpleFileSystem.h>
 #include <Guid/BootDiscoveryPolicy.h>
 #include <Guid/EventGroup.h>
 #include <Guid/NonDiscoverableDevice.h>
@@ -40,6 +41,8 @@
 #include "PlatformBm.h"
 
 #define BOOT_PROMPT  L"Setup (ESC/F2)   Shell (F1)   Reset to MaskROM (F4)   Continue (Enter)"
+#define REMOVABLE_BOOT_FILE_PATH  L"\\EFI\\BOOT\\BOOTAA64.EFI"
+#define REMOVABLE_BOOT_OPTION_DESC L"UEFI Removable Media"
 
 #define DP_NODE_LEN(Type)  { (UINT8)sizeof (Type), (UINT8)(sizeof (Type) >> 8) }
 
@@ -802,6 +805,103 @@ PlatformRegisterOptionsAndKeys (
   PlatformRegisterFvBootOption (&gRockchipMaskromResetFileGuid, L"Reset to MaskROM", 0, &F4);
 }
 
+STATIC
+BOOLEAN
+FileExistsOnSimpleFileSystem (
+  IN EFI_HANDLE   Handle,
+  IN CONST CHAR16 *Path
+  )
+{
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SimpleFileSystem;
+  EFI_FILE_PROTOCOL                *Root;
+  EFI_FILE_PROTOCOL                *File;
+  EFI_STATUS                       Status;
+
+  Status = gBS->HandleProtocol (
+                  Handle,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  (VOID **)&SimpleFileSystem
+                  );
+  if (EFI_ERROR (Status)) {
+    return FALSE;
+  }
+
+  Status = SimpleFileSystem->OpenVolume (SimpleFileSystem, &Root);
+  if (EFI_ERROR (Status)) {
+    return FALSE;
+  }
+
+  Status = Root->Open (Root, &File, (CHAR16 *)Path, EFI_FILE_MODE_READ, 0);
+  if (!EFI_ERROR (Status)) {
+    File->Close (File);
+  }
+
+  Root->Close (Root);
+  return !EFI_ERROR (Status);
+}
+
+STATIC
+VOID
+PlatformRegisterRemovableBootOptions (
+  VOID
+  )
+{
+  EFI_STATUS                     Status;
+  EFI_HANDLE                     *Handles;
+  UINTN                          HandleCount;
+  EFI_BOOT_MANAGER_LOAD_OPTION   *BootOptions;
+  EFI_BOOT_MANAGER_LOAD_OPTION   NewOption;
+  EFI_DEVICE_PATH_PROTOCOL       *DevicePath;
+  UINTN                          BootOptionCount;
+
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &Handles
+                  );
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
+
+  for (UINTN Index = 0; Index < HandleCount; Index++) {
+    if (!FileExistsOnSimpleFileSystem (Handles[Index], REMOVABLE_BOOT_FILE_PATH)) {
+      continue;
+    }
+
+    DevicePath = FileDevicePath (Handles[Index], REMOVABLE_BOOT_FILE_PATH);
+    if (DevicePath == NULL) {
+      continue;
+    }
+
+    Status = EfiBootManagerInitializeLoadOption (
+               &NewOption,
+               0,
+               LoadOptionTypeBoot,
+               LOAD_OPTION_ACTIVE,
+               REMOVABLE_BOOT_OPTION_DESC,
+               DevicePath,
+               NULL,
+               0
+               );
+    if (!EFI_ERROR (Status)) {
+      if (EfiBootManagerFindLoadOption (&NewOption, BootOptions, BootOptionCount) == -1) {
+        EfiBootManagerAddLoadOptionVariable (&NewOption, MAX_UINTN);
+      }
+
+      EfiBootManagerFreeLoadOption (&NewOption);
+    }
+
+    FreePool (DevicePath);
+  }
+
+  EfiBootManagerFreeLoadOptions (BootOptions, BootOptionCount);
+  gBS->FreePool (Handles);
+}
+
 //
 // BDS Platform Functions
 //
@@ -924,6 +1024,11 @@ PlatformBootManagerBeforeConsole (
   // Register platform-specific boot options and keyboard shortcuts.
   //
   PlatformRegisterOptionsAndKeys ();
+
+  //
+  // Ensure removable media fallback entries exist for chainloading.
+  //
+  PlatformRegisterRemovableBootOptions ();
 }
 
 STATIC
