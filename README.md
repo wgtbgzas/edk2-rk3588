@@ -406,6 +406,8 @@ The firmware can only be built on Linux currently. For Windows use WSL.
    sudo pacman -S git base-devel gcc dtc aarch64-linux-gnu-binutils aarch64-linux-gnu-gcc aarch64-linux-gnu-glibc python python-pyelftools iasl --needed
    ```
 
+   If your `python3` comes from `pyenv` or a virtual environment, make sure the active interpreter has `pyelftools` installed (for example, `python3 -m pip install pyelftools`).
+
 2. Clone the repository:
    ```bash
    git clone https://github.com/edk2-porting/edk2-rk3588.git --recursive
