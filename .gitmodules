@@ -1,6 +1,6 @@
 [submodule "edk2"]
 	path = edk2
-	url = https://github.com/wgtbgzas/edk2
+	url = https://github.com/wgtbgzas/edk2.git
 [submodule "edk2-non-osi"]
 	path = edk2-non-osi
 	url = https://github.com/tianocore/edk2-non-osi.git
@@ -9,7 +9,7 @@
 	url = https://github.com/rockchip-linux/rkbin.git
 [submodule "arm-trusted-firmware"]
 	path = arm-trusted-firmware
-	url = https://github.com/wgtbgzas/arm-trusted-firmware
+	url = https://github.com/wgtbgzas/arm-trusted-firmware.git
 	branch = rk3588
 [submodule "devicetree/mainline/upstream"]
 	path = devicetree/mainline/upstream
