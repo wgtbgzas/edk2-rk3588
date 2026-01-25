@@ -224,6 +224,14 @@
 #string STR_USBDP_PHY_USB3_STATE_PROMPT                    #language en-US "Enable or disable SuperSpeed signaling on the selected PHY.\n\nIf USB 3.0 devices connected to the associated Type-C or Type-A port malfunction, disabling this option may help."
 
 /*
+ * USB configuration
+ */
+#string STR_USB_FORM_TITLE                                 #language en-US "USB"
+#string STR_USB_FORM_HELP                                  #language en-US "Configure USB initialization behavior."
+#string STR_USB2_INIT_PROMPT                               #language en-US "USB 2.0 Initialization"
+#string STR_USB2_INIT_HELP                                 #language en-US "Enable or disable USB 2.0 PHY bring-up and EHCI/OHCI registration.\n\nUSB 3.0 stays enabled through xHCI."
+
+/*
  * PCI Express 3.0 configuration
  */
 #string STR_PCIE30_FORM_TITLE                              #language en-US "PCI Express 3.0"

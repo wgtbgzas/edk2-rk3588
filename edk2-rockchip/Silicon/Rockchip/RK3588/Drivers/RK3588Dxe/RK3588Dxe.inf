@@ -24,6 +24,7 @@
   ConfigTable.c
   FanControl.c
   UsbDpPhy.c
+  UsbConfig.c
   DebugSerialPort.c
   Display.c
   ThermalProfile.c

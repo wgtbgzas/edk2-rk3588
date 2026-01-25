@@ -13,6 +13,7 @@
 #include <Library/IoLib.h>
 #include <Library/NonDiscoverableDeviceRegistrationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/RockchipPlatformLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -21,6 +22,40 @@
 #include <Protocol/OhciDeviceProtocol.h>
 
 #include "UsbHcd.h"
+
+#define USB2_ENABLE_VAR_NAME  L"RockchipUsb2Enable"
+#define USB2_INIT_DISABLED    0
+
+STATIC EFI_GUID  mRk3588DxeFormSetGuid = {
+  0x10f41c33, 0xa468, 0x42cd, { 0x85, 0xee, 0x70, 0x43, 0x21, 0x3f, 0x73, 0xa3 }
+};
+
+STATIC
+BOOLEAN
+Usb2InitEnabled (
+  VOID
+  )
+{
+  UINTN       Size;
+  UINT8       Value;
+  EFI_STATUS  Status;
+
+  Size  = sizeof (UINT8);
+  Value = 0;
+
+  Status = gRT->GetVariable (
+                  USB2_ENABLE_VAR_NAME,
+                  &mRk3588DxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Value
+                  );
+  if (EFI_ERROR (Status)) {
+    return TRUE;
+  }
+
+  return (Value != USB2_INIT_DISABLED);
+}
 
 STATIC
 VOID
@@ -340,6 +375,7 @@ UsbEndOfDxeCallback (
   UINT32      EhciControllerAddr;
   UINT32      OhciControllerAddr;
   UINT32      Index;
+  BOOLEAN     Usb2Enabled;
 
   gBS->CloseEvent (Event);
 
@@ -352,11 +388,16 @@ UsbEndOfDxeCallback (
   }
 
   NumUsb2Controller = PcdGet32 (PcdNumEhciController);
+  Usb2Enabled       = Usb2InitEnabled ();
 
-  /* Enable USB PHYs */
-  Usb2PhyResume ();
+  if (Usb2Enabled) {
+    /* Enable USB2 PHYs */
+    Usb2PhyResume ();
 
-  UsbPortPowerEnable ();
+    UsbPortPowerEnable ();
+  } else {
+    DEBUG ((DEBUG_INFO, "USB2 init disabled by setup variable.\n"));
+  }
 
   /* Register USB3 controllers */
   for (Index = 0; Index < XhciControllerAddrArraySize; Index += sizeof (UINT32)) {
@@ -385,40 +426,42 @@ UsbEndOfDxeCallback (
     }
   }
 
-  /* Register USB2 controllers */
-  for (Index = 0; Index < NumUsb2Controller; Index++) {
-    EhciControllerAddr = PcdGet32 (PcdEhciBaseAddress) +
-                         (Index * (PcdGet32 (PcdEhciSize) + PcdGet32 (PcdOhciSize)));
-    OhciControllerAddr = EhciControllerAddr + PcdGet32 (PcdOhciSize);
+  if (Usb2Enabled) {
+    /* Register USB2 controllers */
+    for (Index = 0; Index < NumUsb2Controller; Index++) {
+      EhciControllerAddr = PcdGet32 (PcdEhciBaseAddress) +
+                           (Index * (PcdGet32 (PcdEhciSize) + PcdGet32 (PcdOhciSize)));
+      OhciControllerAddr = EhciControllerAddr + PcdGet32 (PcdOhciSize);
 
-    Status = RegisterNonDiscoverableMmioDevice (
-               NonDiscoverableDeviceTypeEhci,
-               NonDiscoverableDeviceDmaTypeNonCoherent,
-               NULL,
-               NULL,
-               1,
-               EhciControllerAddr,
-               PcdGet32 (PcdEhciSize)
-               );
+      Status = RegisterNonDiscoverableMmioDevice (
+                 NonDiscoverableDeviceTypeEhci,
+                 NonDiscoverableDeviceDmaTypeNonCoherent,
+                 NULL,
+                 NULL,
+                 1,
+                 EhciControllerAddr,
+                 PcdGet32 (PcdEhciSize)
+                 );
 
-    if (EFI_ERROR (Status)) {
-      DEBUG ((
-        DEBUG_ERROR,
-        "Failed to register EHCI device 0x%x, error 0x%r \n",
-        EhciControllerAddr,
-        Status
-        ));
-    }
+      if (EFI_ERROR (Status)) {
+        DEBUG ((
+          DEBUG_ERROR,
+          "Failed to register EHCI device 0x%x, error 0x%r \n",
+          EhciControllerAddr,
+          Status
+          ));
+      }
 
-    Status = RegisterOhciController (OhciControllerAddr);
+      Status = RegisterOhciController (OhciControllerAddr);
 
-    if (EFI_ERROR (Status)) {
-      DEBUG ((
-        DEBUG_ERROR,
-        "Failed to register OHCI device 0x%x, error 0x%r \n",
-        OhciControllerAddr,
-        Status
-        ));
+      if (EFI_ERROR (Status)) {
+        DEBUG ((
+          DEBUG_ERROR,
+          "Failed to register OHCI device 0x%x, error 0x%r \n",
+          OhciControllerAddr,
+          Status
+          ));
+      }
     }
   }
 }

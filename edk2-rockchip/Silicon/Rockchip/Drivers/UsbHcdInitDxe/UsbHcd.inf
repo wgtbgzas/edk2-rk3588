@@ -31,6 +31,7 @@
   MemoryAllocationLib
   NonDiscoverableDeviceRegistrationLib
   UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
   UefiDriverEntryPoint
   RockchipPlatformLib
   DevicePathLib
