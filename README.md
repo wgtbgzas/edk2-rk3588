@@ -312,6 +312,26 @@ This has been observed in cases where firmware was present on more than one devi
 * If you're using USB-C, 3.0 devices will only work in one orientation of the connector. Check both.
 * Make sure the power supply and cable are good.
 
+### Windows ACPI: USB2 and SD installs
+* Do not install `usbehci_nointerlocked`. EHCI/OHCI are disabled and the driver will BSOD.
+* If Windows Setup hides the SD card (removable media), install from WinPE using DISM + bcdboot. Adjust drive letters and image index as needed:
+  ```bat
+  diskpart
+  list disk
+  select disk <sd>
+  clean
+  convert gpt
+  create partition efi size=100
+  format quick fs=fat32 label=SYSTEM
+  assign letter=S
+  create partition primary
+  format quick fs=ntfs label=Windows
+  assign letter=W
+  exit
+  dism /Apply-Image /ImageFile:D:\sources\install.wim /Index:1 /ApplyDir:W:\
+  bcdboot W:\Windows /s S: /f UEFI
+  ```
+
 ### Networking does not work
 * Only integrated Gigabit Ethernet (GMAC), Realtek PCIe and USB controllers are supported.
 

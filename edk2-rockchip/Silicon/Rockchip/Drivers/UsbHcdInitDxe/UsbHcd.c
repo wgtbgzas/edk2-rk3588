@@ -19,8 +19,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DevicePathLib.h>
 
-#include <Protocol/OhciDeviceProtocol.h>
-
 #include "UsbHcd.h"
 
 #define USB2_ENABLE_VAR_NAME  L"RockchipUsb2Enable"
@@ -311,77 +309,6 @@ InitializeXhciController (
   return EFI_SUCCESS;
 }
 
-#pragma pack (1)
-typedef struct {
-  VENDOR_DEVICE_PATH          Vendor;
-  UINT32                      BaseAddress;
-  EFI_DEVICE_PATH_PROTOCOL    End;
-} OHCI_DEVICE_PATH;
-#pragma pack ()
-
-STATIC
-EFI_STATUS
-EFIAPI
-RegisterOhciController (
-  IN UINT32  BaseAddress
-  )
-{
-  EFI_STATUS            Status;
-  OHCI_DEVICE_PROTOCOL  *OhciDevice;
-  OHCI_DEVICE_PATH      *OhciDevicePath;
-  EFI_HANDLE            Handle;
-
-  OhciDevice = (OHCI_DEVICE_PROTOCOL *)AllocateZeroPool (sizeof (*OhciDevice));
-  if (OhciDevice == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  OhciDevice->BaseAddress = BaseAddress;
-
-  OhciDevicePath = (OHCI_DEVICE_PATH *)CreateDeviceNode (
-                                         HARDWARE_DEVICE_PATH,
-                                         HW_VENDOR_DP,
-                                         sizeof (*OhciDevicePath)
-                                         );
-  if (OhciDevicePath == NULL) {
-    Status = EFI_OUT_OF_RESOURCES;
-    goto FreeOhciDevice;
-  }
-
-  CopyGuid (&OhciDevicePath->Vendor.Guid, &gOhciDeviceProtocolGuid);
-
-  /* Device paths must be unique */
-  OhciDevicePath->BaseAddress = OhciDevice->BaseAddress;
-
-  SetDevicePathNodeLength (
-    &OhciDevicePath->Vendor,
-    sizeof (*OhciDevicePath) - sizeof (OhciDevicePath->End)
-    );
-  SetDevicePathEndNode (&OhciDevicePath->End);
-
-  Handle = NULL;
-  Status = gBS->InstallMultipleProtocolInterfaces (
-                  &Handle,
-                  &gEfiDevicePathProtocolGuid,
-                  OhciDevicePath,
-                  &gOhciDeviceProtocolGuid,
-                  OhciDevice,
-                  NULL
-                  );
-  if (EFI_ERROR (Status)) {
-    goto FreeOhciDevicePath;
-  }
-
-  return EFI_SUCCESS;
-
-FreeOhciDevicePath:
-  FreePool (OhciDevicePath);
-FreeOhciDevice:
-  FreePool (OhciDevice);
-
-  return Status;
-}
-
 /**
   This function gets registered as a callback to perform USB controller intialization
 
@@ -397,12 +324,9 @@ UsbEndOfDxeCallback (
   )
 {
   EFI_STATUS  Status;
-  UINT32      NumUsb2Controller;
   UINTN       XhciControllerAddrArraySize;
   UINT8       *XhciControllerAddrArrayPtr;
   UINT32      XhciControllerAddr;
-  UINT32      EhciControllerAddr;
-  UINT32      OhciControllerAddr;
   UINT32      Index;
   BOOLEAN     XhciEnabled;
   BOOLEAN     Usb2Enabled;
@@ -417,7 +341,6 @@ UsbEndOfDxeCallback (
     XhciControllerAddrArraySize = 0;
   }
 
-  NumUsb2Controller = PcdGet32 (PcdNumEhciController);
   XhciEnabled       = XhciInitEnabled ();
   Usb2Enabled       = Usb2InitEnabled ();
 
@@ -462,42 +385,7 @@ UsbEndOfDxeCallback (
   }
 
   if (Usb2Enabled) {
-    /* Register USB2 controllers */
-    for (Index = 0; Index < NumUsb2Controller; Index++) {
-      EhciControllerAddr = PcdGet32 (PcdEhciBaseAddress) +
-                           (Index * (PcdGet32 (PcdEhciSize) + PcdGet32 (PcdOhciSize)));
-      OhciControllerAddr = EhciControllerAddr + PcdGet32 (PcdOhciSize);
-
-      Status = RegisterNonDiscoverableMmioDevice (
-                 NonDiscoverableDeviceTypeEhci,
-                 NonDiscoverableDeviceDmaTypeNonCoherent,
-                 NULL,
-                 NULL,
-                 1,
-                 EhciControllerAddr,
-                 PcdGet32 (PcdEhciSize)
-                 );
-
-      if (EFI_ERROR (Status)) {
-        DEBUG ((
-          DEBUG_ERROR,
-          "Failed to register EHCI device 0x%x, error 0x%r \n",
-          EhciControllerAddr,
-          Status
-          ));
-      }
-
-      Status = RegisterOhciController (OhciControllerAddr);
-
-      if (EFI_ERROR (Status)) {
-        DEBUG ((
-          DEBUG_ERROR,
-          "Failed to register OHCI device 0x%x, error 0x%r \n",
-          OhciControllerAddr,
-          Status
-          ));
-      }
-    }
+    DEBUG ((DEBUG_INFO, "USB2 PHY enabled; skipping EHCI/OHCI registration.\n"));
   }
 }
 

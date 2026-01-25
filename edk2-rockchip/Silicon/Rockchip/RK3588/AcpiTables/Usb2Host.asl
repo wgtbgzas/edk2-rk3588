@@ -19,6 +19,9 @@ Scope (\_SB_) {
     If (EHID == 1) {
       Name (_CID, "PNP0D20")
     }
+    Method (_STA, 0, NotSerialized) {
+      Return (Zero)
+    }
     Name (_UID, Zero)
     Name (_CCA, Zero)
 
@@ -62,6 +65,9 @@ Scope (\_SB_) {
     If (EHID == 1) {
       Name (_CID, "PNP0D20")
     }
+    Method (_STA, 0, NotSerialized) {
+      Return (Zero)
+    }
     Name (_UID, One)
     Name (_CCA, Zero)
 
@@ -103,6 +109,9 @@ Scope (\_SB_) {
   Device (OHC0) {
     Name (_HID, "PRP0001")
     Name (_CLS, Package() { 0x0c, 0x03, 0x10 })
+    Method (_STA, 0, NotSerialized) {
+      Return (Zero)
+    }
     Name (_UID, Zero)
     Name (_CCA, Zero)
 
@@ -151,6 +160,9 @@ Scope (\_SB_) {
   Device (OHC1) {
     Name (_HID, "PRP0001")
     Name (_CLS, Package() { 0x0c, 0x03, 0x10 })
+    Method (_STA, 0, NotSerialized) {
+      Return (Zero)
+    }
     Name (_UID, One)
     Name (_CCA, Zero)
 
