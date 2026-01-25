@@ -189,6 +189,11 @@ formset
       name  = RockchipUsb2Enable,
       guid  = RK3588DXE_FORMSET_GUID;
 
+    efivarstore UINT8,
+      attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+      name  = RockchipXhciEnable,
+      guid  = RK3588DXE_FORMSET_GUID;
+
     efivarstore PCIE30_STATE_VARSTORE_DATA,
       attribute = EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
       name  = Pcie30State,
@@ -844,6 +849,15 @@ formset
 
     form formid = 0x1009,
         title  = STRING_TOKEN(STR_USB_FORM_TITLE);
+
+        oneof varid = RockchipXhciEnable,
+          prompt      = STRING_TOKEN(STR_XHCI_INIT_PROMPT),
+          help        = STRING_TOKEN(STR_XHCI_INIT_HELP),
+          flags       = NUMERIC_SIZE_1 | INTERACTIVE | RESET_REQUIRED,
+          default     = XHCI_INIT_ENABLED,
+          option text = STRING_TOKEN(STR_ENABLED), value = XHCI_INIT_ENABLED, flags = 0;
+          option text = STRING_TOKEN(STR_DISABLED), value = XHCI_INIT_DISABLED, flags = 0;
+        endoneof;
 
         oneof varid = RockchipUsb2Enable,
           prompt      = STRING_TOKEN(STR_USB2_INIT_PROMPT),

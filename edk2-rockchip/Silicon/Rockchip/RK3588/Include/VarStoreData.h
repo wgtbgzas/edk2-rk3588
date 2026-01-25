@@ -133,6 +133,9 @@ typedef struct {
 #define USB2_INIT_DISABLED  0
 #define USB2_INIT_ENABLED   1
 
+#define XHCI_INIT_DISABLED  0
+#define XHCI_INIT_ENABLED   1
+
 typedef struct {
   UINT64    Value;
 } DEBUG_SERIAL_PORT_BAUD_RATE_VARSTORE_DATA;

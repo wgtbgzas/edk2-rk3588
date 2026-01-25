@@ -228,6 +228,8 @@
  */
 #string STR_USB_FORM_TITLE                                 #language en-US "USB"
 #string STR_USB_FORM_HELP                                  #language en-US "Configure USB initialization behavior."
+#string STR_XHCI_INIT_PROMPT                               #language en-US "USB 3.0 (xHCI) Initialization"
+#string STR_XHCI_INIT_HELP                                 #language en-US "Enable or disable USB 3.0 controller registration and bring-up.\n\nUSB 2.0 (EHCI/OHCI) can be toggled separately."
 #string STR_USB2_INIT_PROMPT                               #language en-US "USB 2.0 Initialization"
 #string STR_USB2_INIT_HELP                                 #language en-US "Enable or disable USB 2.0 PHY bring-up and EHCI/OHCI registration.\n\nUSB 3.0 stays enabled through xHCI."
 

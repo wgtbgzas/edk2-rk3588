@@ -24,7 +24,9 @@
 #include "UsbHcd.h"
 
 #define USB2_ENABLE_VAR_NAME  L"RockchipUsb2Enable"
+#define XHCI_ENABLE_VAR_NAME  L"RockchipXhciEnable"
 #define USB2_INIT_DISABLED    0
+#define XHCI_INIT_DISABLED    0
 
 STATIC EFI_GUID  mRk3588DxeFormSetGuid = {
   0x10f41c33, 0xa468, 0x42cd, { 0x85, 0xee, 0x70, 0x43, 0x21, 0x3f, 0x73, 0xa3 }
@@ -55,6 +57,33 @@ Usb2InitEnabled (
   }
 
   return (Value != USB2_INIT_DISABLED);
+}
+
+STATIC
+BOOLEAN
+XhciInitEnabled (
+  VOID
+  )
+{
+  UINTN       Size;
+  UINT8       Value;
+  EFI_STATUS  Status;
+
+  Size  = sizeof (UINT8);
+  Value = 0;
+
+  Status = gRT->GetVariable (
+                  XHCI_ENABLE_VAR_NAME,
+                  &mRk3588DxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Value
+                  );
+  if (EFI_ERROR (Status)) {
+    return TRUE;
+  }
+
+  return (Value != XHCI_INIT_DISABLED);
 }
 
 STATIC
@@ -375,6 +404,7 @@ UsbEndOfDxeCallback (
   UINT32      EhciControllerAddr;
   UINT32      OhciControllerAddr;
   UINT32      Index;
+  BOOLEAN     XhciEnabled;
   BOOLEAN     Usb2Enabled;
 
   gBS->CloseEvent (Event);
@@ -388,6 +418,7 @@ UsbEndOfDxeCallback (
   }
 
   NumUsb2Controller = PcdGet32 (PcdNumEhciController);
+  XhciEnabled       = XhciInitEnabled ();
   Usb2Enabled       = Usb2InitEnabled ();
 
   if (Usb2Enabled) {
@@ -399,31 +430,35 @@ UsbEndOfDxeCallback (
     DEBUG ((DEBUG_INFO, "USB2 init disabled by setup variable.\n"));
   }
 
-  /* Register USB3 controllers */
-  for (Index = 0; Index < XhciControllerAddrArraySize; Index += sizeof (UINT32)) {
-    XhciControllerAddr = XhciControllerAddrArrayPtr[Index] |
-                         XhciControllerAddrArrayPtr[Index + 1] << 8 |
-                         XhciControllerAddrArrayPtr[Index + 2] << 16 |
-                         XhciControllerAddrArrayPtr[Index + 3] << 24;
+  if (XhciEnabled) {
+    /* Register USB3 controllers */
+    for (Index = 0; Index < XhciControllerAddrArraySize; Index += sizeof (UINT32)) {
+      XhciControllerAddr = XhciControllerAddrArrayPtr[Index] |
+                           XhciControllerAddrArrayPtr[Index + 1] << 8 |
+                           XhciControllerAddrArrayPtr[Index + 2] << 16 |
+                           XhciControllerAddrArrayPtr[Index + 3] << 24;
 
-    Status = RegisterNonDiscoverableMmioDevice (
-               NonDiscoverableDeviceTypeXhci,
-               NonDiscoverableDeviceDmaTypeNonCoherent,
-               InitializeXhciController,
-               NULL,
-               1,
-               XhciControllerAddr,
-               PcdGet32 (PcdDwc3Size)
-               );
+      Status = RegisterNonDiscoverableMmioDevice (
+                 NonDiscoverableDeviceTypeXhci,
+                 NonDiscoverableDeviceDmaTypeNonCoherent,
+                 InitializeXhciController,
+                 NULL,
+                 1,
+                 XhciControllerAddr,
+                 PcdGet32 (PcdDwc3Size)
+                 );
 
-    if (EFI_ERROR (Status)) {
-      DEBUG ((
-        DEBUG_ERROR,
-        "Failed to register XHCI device 0x%x, error 0x%r \n",
-        XhciControllerAddr,
-        Status
-        ));
+      if (EFI_ERROR (Status)) {
+        DEBUG ((
+          DEBUG_ERROR,
+          "Failed to register XHCI device 0x%x, error 0x%r \n",
+          XhciControllerAddr,
+          Status
+          ));
+      }
     }
+  } else {
+    DEBUG ((DEBUG_INFO, "xHCI init disabled by setup variable.\n"));
   }
 
   if (Usb2Enabled) {
