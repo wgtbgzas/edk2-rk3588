@@ -19,7 +19,8 @@
 #endif
 
 Scope (\_SB_) {
-  Name (SDRM, 1) // SD slot is removable
+  Name (RMVF, Zero) // 0 = fixed, 1 = removable (Setup-controlled)
+  Name (SDRM, Zero) // Keep legacy name for patching compatibility
 
   Device (SDHC) {
     Name (_HID, "RKCPFE2C")
@@ -54,6 +55,7 @@ Scope (\_SB_) {
         Package () { "sd-uhs-ddr50", SDMMC_CAP_DDR50 },
         Package () { "sd-uhs-sdr50", SDMMC_CAP_SDR50 },
         Package () { "sd-uhs-sdr104", SDMMC_CAP_SDR104 },
+        Package () { "removable", RMVF },
         Package () { "broken-cd", FixedPcdGetBool (PcdRkSdmmcCardDetectBroken) },
       }
     })
@@ -64,8 +66,8 @@ Scope (\_SB_) {
     Device (SDMM) {
       Name (_ADR, 0x0)
 
-      Method (_RMV) {
-        Return (SDRM)
+      Method (_RMV, 0, NotSerialized) {
+        Return (RMVF)
       }
     }
   }

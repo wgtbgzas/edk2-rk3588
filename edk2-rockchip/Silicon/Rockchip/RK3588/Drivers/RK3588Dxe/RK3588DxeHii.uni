@@ -232,6 +232,10 @@
 #string STR_XHCI_INIT_HELP                                 #language en-US "Enable or disable USB 3.0 controller registration and bring-up.\n\nUSB 2.0 (EHCI/OHCI) can be toggled separately."
 #string STR_USB2_INIT_PROMPT                               #language en-US "USB 2.0 Initialization"
 #string STR_USB2_INIT_HELP                                 #language en-US "Enable or disable USB 2.0 PHY bring-up and port power.\n\nUSB 3.0 stays enabled through xHCI."
+#string STR_SD_REMOVABLE_PROMPT                            #language en-US "SD Card Removable Media"
+#string STR_SD_REMOVABLE_HELP                              #language en-US "Fixed improves Windows Setup/install to SD media. Removable may cause Setup and diskpart restrictions."
+#string STR_SD_REMOVABLE_FIXED                             #language en-US "Fixed (recommended for Windows install)"
+#string STR_SD_REMOVABLE_REMOVABLE                         #language en-US "Removable"
 
 /*
  * PCI Express 3.0 configuration

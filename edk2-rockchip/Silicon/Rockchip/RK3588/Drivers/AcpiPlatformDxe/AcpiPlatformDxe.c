@@ -20,6 +20,7 @@
 #include <Library/DevicePathLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <AcpiTables.h>
 #include <VarStoreData.h>
@@ -32,6 +33,12 @@ STATIC EFI_ACPI_SDT_PROTOCOL        *mAcpiSdtProtocol;
 STATIC EFI_ACPI_DESCRIPTION_HEADER  *mDsdtTable;
 
 STATIC BOOLEAN  mIsSdmmcBoot = FALSE;
+
+#define SD_REMOVABLE_VAR_NAME  L"SdRemovableMedia"
+
+STATIC EFI_GUID  mRk3588DxeFormSetGuid = {
+  0x10f41c33, 0xa468, 0x42cd, { 0x85, 0xee, 0x70, 0x43, 0x21, 0x3f, 0x73, 0xa3 }
+};
 
 #define SDT_PATTERN_LEN  (AML_NAME_SEG_SIZE + 1)
 
@@ -97,6 +104,40 @@ AcpiUpdateSdtNameInteger (
   }
 
   return EFI_NOT_FOUND;
+}
+
+STATIC
+UINT8
+GetSdRemovableSetting (
+  OUT BOOLEAN  *Present
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       Size;
+  UINT8       Value;
+
+  Value = 0;
+  Size  = sizeof (Value);
+  Status = gRT->GetVariable (
+                  SD_REMOVABLE_VAR_NAME,
+                  &mRk3588DxeFormSetGuid,
+                  NULL,
+                  &Size,
+                  &Value
+                  );
+  if (EFI_ERROR (Status) || (Size != sizeof (Value))) {
+    if (Present != NULL) {
+      *Present = FALSE;
+    }
+
+    return 0;
+  }
+
+  if (Present != NULL) {
+    *Present = TRUE;
+  }
+
+  return (Value != 0) ? 1 : 0;
 }
 
 STATIC
@@ -413,11 +454,17 @@ AcpiPlatformExitBootServicesOsHandler (
   }
 
   //
-  // If the boot device is SDMMC, mark the slot as non-removable.
-  // This allows Windows to create a page file on it.
+  // Update SD removability for the microSD slot.
   //
-  if (mIsSdmmcBoot) {
-    AcpiUpdateSdtNameInteger (mDsdtTable, "SDRM", 0);
+  {
+    BOOLEAN  Present;
+    UINT8    SdRemovable;
+
+    SdRemovable = GetSdRemovableSetting (&Present);
+    if (Present || mIsSdmmcBoot) {
+      AcpiUpdateSdtNameInteger (mDsdtTable, "SDRM", SdRemovable);
+      AcpiUpdateSdtNameInteger (mDsdtTable, "RMVF", SdRemovable);
+    }
   }
 
   AcpiFixupPcieEcam (OsType);
